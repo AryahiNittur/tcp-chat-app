@@ -54,4 +54,22 @@ message forwarding when Features 1 and 2 are ready.
 I used ChatGPT to help plan the experiment, build and understand the
 code step by step, and explain the results. I ran the tests locally
 and checked that the server replies, RTT measurements, and CSV
-export worked.
+
+
+## How this meets Feature 3
+
+The assignment lists introducing artificial delay to study latency
+as an example of a networking enhancement. This experiment does that
+by making the server wait before replying and measuring how the
+added delay affects round-trip time.
+
+We compare 0, 100, and 300 ms delays using 10 trials each. The average,
+minimum, and maximum RTT show the measurable impact, and the CSV
+stores the individual measurements.
+
+ChatGPT helped with designing, implementing, and analyzing the
+experiment, which addresses the generative AI part of Feature 3.
+
+This is currently a standalone prototype. To finish the enhancement
+to our chat application, we still need to apply the delay to chat
+message forwarding and measure its effect there.
