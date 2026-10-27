@@ -1,5 +1,7 @@
 import socket
 import time
+import csv
+from pathlib import Path
 
 HOST = "127.0.0.1"
 PORT = 5003
@@ -12,6 +14,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
     
     
     # Send and measure RTT
+    
+    results = []
     
     message_id = 0
 
@@ -37,6 +41,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
 
                 rtt_ms = (end_time - start_time) * 1000
                 measurements.append(rtt_ms)
+                results.append([delay_ms, trial + 1, rtt_ms])
 
                 print(f"Trial {trial + 1}: {rtt_ms:.2f} ms")
 
@@ -48,3 +53,12 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
                 f"min={min(measurements):.2f} ms, "
                 f"max={max(measurements):.2f} ms"
             )
+            
+output_path = Path(__file__).parent / "latency_results.csv"
+
+with output_path.open("w", newline="") as file:
+    writer = csv.writer(file)
+    writer.writerow(["added_delay_ms", "trial", "rtt_ms"])
+    writer.writerows(results)
+
+print(f"\nResults saved to {output_path}")
