@@ -13,21 +13,38 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
     
     # Send and measure RTT
     
-    message_id = 1
-    delay_ms = 100
-    message = f"PING {message_id} {delay_ms}\n"
+    message_id = 0
 
     with client.makefile("r", encoding="utf-8") as replies:
-        # Measure time
-        start_time = time.perf_counter()
-        client.sendall(message.encode("utf-8"))
+        for delay_ms in [0, 100, 300]:
+            measurements = []
+            print(f"\nTesting {delay_ms} ms added delay")
 
-        reply = replies.readline()
-        end_time = time.perf_counter()
+            for trial in range(10):
+                message_id += 1
+                message = f"PING {message_id} {delay_ms}\n"
 
-        if reply.strip() == f"PONG {message_id}":
-            rtt_ms = (end_time - start_time) * 1000
-            print(f"Added server delay: {delay_ms} ms")
-            print(f"Round-trip time: {rtt_ms:.2f} ms")
-        else:
-            print(f"Unexpected reply or disconnected server: {reply!r}")
+                start_time = time.perf_counter()
+                client.sendall(message.encode("utf-8"))
+
+                reply = replies.readline()
+                end_time = time.perf_counter()
+
+                if reply.strip() != f"PONG {message_id}":
+                    raise RuntimeError(
+                        f"Unexpected reply or disconnected server: {reply!r}"
+                    )
+
+                rtt_ms = (end_time - start_time) * 1000
+                measurements.append(rtt_ms)
+
+                print(f"Trial {trial + 1}: {rtt_ms:.2f} ms")
+
+            average_rtt = sum(measurements) / len(measurements)
+
+            print(
+                f"Summary for {delay_ms} ms delay: "
+                f"average={average_rtt:.2f} ms, "
+                f"min={min(measurements):.2f} ms, "
+                f"max={max(measurements):.2f} ms"
+            )
