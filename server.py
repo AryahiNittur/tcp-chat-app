@@ -8,10 +8,12 @@ every other connected client. Each client is handled in its own thread.
 import socket
 import sys
 import threading
+import time
 
 HOST = "0.0.0.0"  # Accept connections from other machines
 DEFAULT_PORT = 12345
 BUFFER_SIZE = 1024
+CHAT_DELAY_MS = 0
 
 # Shared across client threads
 clients = []
@@ -99,6 +101,11 @@ def handle_client(client_sock, client_addr):
                 text = line.decode(errors="replace").strip()
                 if text:
                     print(f"[{label}] {text}")
+                    
+                    # Feature 3 simulates delay before forwarding a message
+                    if CHAT_DELAY_MS > 0:
+                        time.sleep(CHAT_DELAY_MS / 1000)
+                    
                     broadcast(f"[{label}] {text}\n", client_sock)
     except OSError:
         pass  # Client disconnected unexpectedly.
@@ -112,8 +119,15 @@ def handle_client(client_sock, client_addr):
 
 def main():
     """Start the server and accept clients until Ctrl+C is pressed."""
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_PORT
+    # Lets the server accept a feature 3 delay from the terminal
+    global CHAT_DELAY_MS
 
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_PORT
+    CHAT_DELAY_MS = int(sys.argv[2]) if len(sys.argv) > 2 else 0
+
+    if not 0 <= CHAT_DELAY_MS <= 1000:
+        raise SystemExit("Delay must be between 0 and 1000 milliseconds.")
+    
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # Lets the server restart right away without "address already in use".
     server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -123,6 +137,7 @@ def main():
     server_sock.settimeout(1.0)
 
     print(f"Broadcast server listening on port {port}")
+    print(f"Added chat delay: {CHAT_DELAY_MS} ms")
     print(f"  Same computer: connect to 127.0.0.1:{port}")
     print(f"  Same network:  connect to {get_lan_ip()}:{port}")
     print("Press Ctrl+C to stop.\n")
